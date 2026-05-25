@@ -1,0 +1,40 @@
+# ~30 subyacentes canónicos. name = "Activo Canónico (usar este nombre)" exacto.
+# macro_class debe matchear uno de asset_classes.
+canonical_assets:
+  - {name: "Cash", macro_class: "Cash y Otros", score: 10.0}
+  - {name: "US Treasuries Corto Plazo", macro_class: "Cash y Otros", score: 9.5}
+  - {name: "Oro", macro_class: "Cash y Otros", score: 7.5}
+  - {name: "Cripto", macro_class: "Cash y Otros", score: 1.0}
+  - {name: "Commodities", macro_class: "Cash y Otros", score: 3.0}
+
+  - {name: "US Treasuries - Largo Plazo", macro_class: "Mercados Públicos - Fijo", score: 8.5}
+  - {name: "Bonos Corporativos Investment Grade (AAA-BBB)", macro_class: "Mercados Públicos - Fijo", score: 8.0}
+  - {name: "Bonos High Yield", macro_class: "Mercados Públicos - Fijo", score: 5.5}
+  - {name: "Bonos Mercados Emergentes (Global)", macro_class: "Mercados Públicos - Fijo", score: 4.0}
+  - {name: "Bonos Latinoamérica", macro_class: "Mercados Públicos - Fijo", score: 5.0}
+  - {name: "Bonos Perú", macro_class: "Mercados Públicos - Fijo", score: 5.0}
+
+  - {name: "US Large Cap", macro_class: "Mercados Públicos - Variable", score: 4.5}
+  - {name: "US Mid & Small Cap", macro_class: "Mercados Públicos - Variable", score: 3.5}
+  - {name: "Desarrollados ex US", macro_class: "Mercados Públicos - Variable", score: 5.0}
+  - {name: "Mercados Emergentes ex Perú", macro_class: "Mercados Públicos - Variable", score: 2.5}
+  - {name: "Acciones Peru", macro_class: "Mercados Públicos - Variable", score: 3.5}
+  - {name: "REITs Públicos", macro_class: "Mercados Públicos - Variable", score: 5.5}
+
+  - {name: "Private Credit Senior", macro_class: "Mercados Privados", score: 7.0}
+  - {name: "Private Credit Subordinated", macro_class: "Mercados Privados", score: 5.0}
+  - {name: "Private Equity", macro_class: "Mercados Privados", score: 2.0}
+  - {name: "Venture Capital", macro_class: "Mercados Privados", score: 1.5}
+  - {name: "Hedge Funds", macro_class: "Mercados Privados", score: 4.0}
+  - {name: "Infrastructure Privada", macro_class: "Mercados Privados", score: 5.0}
+  - {name: "Real Estate Privado (Fondos)", macro_class: "Mercados Privados", score: 5.0}
+
+  - {name: "Propiedades Directas Perú", macro_class: "Inmobiliario Directo", score: 5.5}
+  - {name: "Propiedades Directas Exterior", macro_class: "Inmobiliario Directo", score: 3.0}
+
+  - {name: "Club Deals Real Estate Perú", macro_class: "Club deals", score: 4.0}
+  - {name: "Club Deals Real Estate USA y Otros", macro_class: "Club deals", score: 4.0}
+  - {name: "Club Deals Deuda Privada Peru", macro_class: "Club deals", score: 5.5}
+  - {name: "Club Deals Deuda Privada Usa", macro_class: "Club deals", score: 5.5}
+  - {name: "Club Deals Otros Peru", macro_class: "Club deals", score: 4.0}
+  - {name: "Club Deals Otros USA", macro_class: "Club deals", score: 4.0}

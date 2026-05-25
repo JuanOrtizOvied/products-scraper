@@ -1,0 +1,70 @@
+[project]
+name = "scraper"
+version = "0.1.0"
+description = "Buscador/clasificador de productos de inversión"
+authors = [
+    {name = "Sabbi", email = "informatica@ccastrovirreyna.com"}
+]
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "sqlalchemy[asyncio]>=2.0",
+    "alembic>=1.13",
+    "aiosqlite>=0.19",
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "openpyxl>=3.1",
+    "pandas>=2.2",
+    "structlog>=24.1",
+    "pyyaml>=6.0",
+    "rapidfuzz>=3.6",
+    "anthropic (>=0.40)",
+    "tenacity (>=8.2)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "playwright (>=1.58.0,<2.0.0)",
+    "lxml (>=6.1.0,<7.0.0)",
+    "beautifulsoup4 (>=4.14.3,<5.0.0)",
+    "pypdf (>=6.10.2,<7.0.0)",
+    "pdfplumber (>=0.11.9,<0.12.0)",
+    "pdf2image (>=1.17.0,<2.0.0)",
+    "tldextract (>=5.3.1,<6.0.0)",
+    "streamlit (>=1.56.0,<2.0.0)",
+    "scrapling[all] (>=0.4.7,<0.5.0)"
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.1",
+    "ruff>=0.3",
+    "mypy>=1.8",
+    "types-pyyaml (>=6.0)",
+    "pandas-stubs (>=2.2)",
+    "pytest-httpx (>=0.36.2,<0.37.0)",
+    "reportlab (>=4.4.10,<5.0.0) ; python_version >= \"3.11\" and python_version < \"4\""
+]
+
+[tool.poetry]
+packages = [{include = "scraper", from = "src"}]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["alembic/versions", "src/scraper/ui/pages"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

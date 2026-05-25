@@ -1,0 +1,8 @@
+# 6 clases de activo macro — lista cerrada. El clasificador NO puede inventar otras.
+asset_classes:
+  - name: "Inmobiliario Directo"
+  - name: "Mercados Públicos - Fijo"
+  - name: "Mercados Públicos - Variable"
+  - name: "Mercados Privados"
+  - name: "Club deals"
+  - name: "Cash y Otros"

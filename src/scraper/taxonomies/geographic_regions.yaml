@@ -1,0 +1,7 @@
+# 5 regiones canónicas + benchmark weight
+geographic_regions:
+  - {name: "EEUU", benchmark_weight: 0.465}
+  - {name: "Desarrollados ex-US", benchmark_weight: 0.216}
+  - {name: "Emergentes ex-Perú", benchmark_weight: 0.142}
+  - {name: "Latam ex-Perú", benchmark_weight: 0.038}
+  - {name: "Perú", benchmark_weight: 0.139}

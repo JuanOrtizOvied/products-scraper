@@ -1,0 +1,41 @@
+# Mapeo de variantes observadas (en el Excel + scrapings futuros) → canónico.
+# Ampliar cada vez que aparezca una nueva variante.
+asset_class_variants:
+  "mercados publicos variable": "Mercados Públicos - Variable"
+  "mercados publicos fijo": "Mercados Públicos - Fijo"
+  "mercado publico variable": "Mercados Públicos - Variable"
+  "mercado publico fijo": "Mercados Públicos - Fijo"
+  "mercados publicos - variable": "Mercados Públicos - Variable"
+  "mercados publicos - fijo": "Mercados Públicos - Fijo"
+  "mercados privados": "Mercados Privados"
+  "cash y otros": "Cash y Otros"
+  "efectivo": "Cash y Otros"
+  "otros": "Cash y Otros"
+  "club deal": "Club deals"
+  "club deals": "Club deals"
+  "inmobiliario directo": "Inmobiliario Directo"
+  "inmobiliario": "Inmobiliario Directo"
+
+region_variants:
+  "peru": "Perú"
+  "perú": "Perú"
+  "eeuu": "EEUU"
+  "usa": "EEUU"
+  "estados unidos": "EEUU"
+  "desarrollados ex-us": "Desarrollados ex-US"
+  "desarrollados ex us": "Desarrollados ex-US"
+  "emergentes ex-perú": "Emergentes ex-Perú"
+  "emergentes ex-peru": "Emergentes ex-Perú"
+  "latam ex-perú": "Latam ex-Perú"
+  "latam ex-peru": "Latam ex-Perú"
+
+subyacente_variants:
+  "emergentes ex-peru": "Mercados Emergentes ex Perú"
+  "emergentes ex-perú": "Mercados Emergentes ex Perú"
+  "mercados emergentes ex peru": "Mercados Emergentes ex Perú"
+  "bonos corp. investment grade": "Bonos Corporativos Investment Grade (AAA-BBB)"
+  "bonos corporativos ig": "Bonos Corporativos Investment Grade (AAA-BBB)"
+  "bonos ig": "Bonos Corporativos Investment Grade (AAA-BBB)"
+  "bonos peru": "Bonos Perú"
+  "bonos latam": "Bonos Latinoamérica"
+  "bonos latinoamerica": "Bonos Latinoamérica"

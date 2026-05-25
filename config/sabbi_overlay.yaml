@@ -1,0 +1,11 @@
+# Sabbi operational defaults — attributes that the pipeline cannot find on
+# the web because they represent Sabbi's own custody structure, not the
+# emisor's data. The review UI offers "Apply Sabbi defaults" that pre-fills
+# these when approving a classification.
+
+via_sabbi_brokerage:
+  # Convention for products held via Credicorp Capital custody (standard
+  # structure — applies to ~95% of products in Sabbi's universe)
+  administrador: "Credicorp Capital"
+  gestor: "Credicorp Capital"
+  comision: 0.0065
