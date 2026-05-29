@@ -67,17 +67,17 @@ runs:
               - traefik-network
             labels:
               traefik.enable: "true"
-              traefik.http.routers.sabbi-scraper.rule: "Host(\`$DOMAIN\`)"
-              traefik.http.routers.sabbi-scraper.entrypoints: "websecured"
-              traefik.http.routers.sabbi-scraper.tls.certresolver: "le"
-              traefik.http.services.sabbi-scraper.loadbalancer.server.port: "8501"
-              traefik.http.services.sabbi-scraper.loadbalancer.healthcheck.path: "/_stcore/health"
-              traefik.http.services.sabbi-scraper.loadbalancer.healthcheck.port: "8501"
-              traefik.http.services.sabbi-scraper.loadbalancer.healthcheck.interval: "90s"
-              traefik.http.services.sabbi-scraper.loadbalancer.healthcheck.timeout: "3s"
-              traefik.http.routers.sabbi-scraper.middlewares: "sabbi-scraper-retry"
-              traefik.http.middlewares.sabbi-scraper-retry.retry.attempts: "3"
-              traefik.http.middlewares.sabbi-scraper-retry.retry.initialinterval: "500ms"
+              traefik.http.routers.boba-fett.rule: "Host(\`$DOMAIN\`)"
+              traefik.http.routers.boba-fett.entrypoints: "websecured"
+              traefik.http.routers.boba-fett.tls.certresolver: "le"
+              traefik.http.services.boba-fett.loadbalancer.server.port: "8501"
+              traefik.http.services.boba-fett.loadbalancer.healthcheck.path: "/_stcore/health"
+              traefik.http.services.boba-fett.loadbalancer.healthcheck.port: "8501"
+              traefik.http.services.boba-fett.loadbalancer.healthcheck.interval: "90s"
+              traefik.http.services.boba-fett.loadbalancer.healthcheck.timeout: "3s"
+              traefik.http.routers.boba-fett.middlewares: "boba-fett-retry"
+              traefik.http.middlewares.boba-fett-retry.retry.attempts: "3"
+              traefik.http.middlewares.boba-fett-retry.retry.initialinterval: "500ms"
             restart: always
             logging:
               driver: awslogs
