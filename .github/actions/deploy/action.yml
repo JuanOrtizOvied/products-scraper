@@ -1,0 +1,184 @@
+name: "Deployment"
+description: "CI Blue-Green Deployment with Traefik for Scraper"
+
+inputs:
+  stage:
+    required: true
+    description: "Stage ID"
+  domain:
+    required: true
+    description: "App domain"
+  ecr_image:
+    required: true
+    description: "ECR image"
+  aws_region:
+    required: true
+    description: "AWS region"
+  aws_secret_name:
+    required: true
+    description: "AWS secret name"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get secrets and create .env
+      shell: bash
+      run: |
+        aws secretsmanager get-secret-value \
+          --region "${{ inputs.aws_region }}" \
+          --secret-id "${{ inputs.aws_secret_name }}" \
+          --query SecretString \
+          --output text > secrets.json
+
+        cat secrets.json | jq -r 'to_entries | map("\(.key)=\(.value|tostring)") | .[]' > .env
+        rm -f secrets.json
+
+    - name: Set resource values based on stage
+      id: resource_config
+      shell: bash
+      run: |
+        echo "replicas=1" >> $GITHUB_OUTPUT
+        echo "memory=512M" >> $GITHUB_OUTPUT
+        echo "number_replicas_decrease=0" >> $GITHUB_OUTPUT
+
+    - name: Create docker-compose.yml
+      shell: bash
+      env:
+        DOMAIN: ${{ inputs.domain }}
+        REPLICAS: ${{ steps.resource_config.outputs.replicas }}
+        MEMORY: ${{ steps.resource_config.outputs.memory }}
+      run: |
+        cd /home/ubuntu/apps/sabbi-scraper
+        cat > docker-compose.yml <<EOF
+        services:
+          app:
+            image: ${{ inputs.ecr_image }}
+            deploy:
+              replicas: $REPLICAS
+              resources:
+                limits:
+                  memory: $MEMORY
+            env_file:
+              - .env
+            volumes:
+              - scraper-data:/app/data
+              - ./config:/app/config:ro
+            networks:
+              - traefik-network
+            labels:
+              traefik.enable: "true"
+              traefik.http.routers.sabbi-scraper.rule: "Host(\`$DOMAIN\`)"
+              traefik.http.routers.sabbi-scraper.entrypoints: "websecured"
+              traefik.http.routers.sabbi-scraper.tls.certresolver: "le"
+              traefik.http.services.sabbi-scraper.loadbalancer.server.port: "8501"
+              traefik.http.services.sabbi-scraper.loadbalancer.healthcheck.path: "/_stcore/health"
+              traefik.http.services.sabbi-scraper.loadbalancer.healthcheck.port: "8501"
+              traefik.http.services.sabbi-scraper.loadbalancer.healthcheck.interval: "90s"
+              traefik.http.services.sabbi-scraper.loadbalancer.healthcheck.timeout: "3s"
+              traefik.http.routers.sabbi-scraper.middlewares: "sabbi-scraper-retry"
+              traefik.http.middlewares.sabbi-scraper-retry.retry.attempts: "3"
+              traefik.http.middlewares.sabbi-scraper-retry.retry.initialinterval: "500ms"
+            restart: always
+            logging:
+              driver: awslogs
+              options:
+                awslogs-region: "${{ inputs.aws_region }}"
+                awslogs-group: "${{ inputs.stage }}-scraper-logs"
+                awslogs-create-group: "true"
+
+          worker:
+            image: ${{ inputs.ecr_image }}
+            command: ["python", "-m", "scraper.scripts.worker"]
+            deploy:
+              resources:
+                limits:
+                  memory: $MEMORY
+            env_file:
+              - .env
+            volumes:
+              - scraper-data:/app/data
+              - ./config:/app/config:ro
+            networks:
+              - traefik-network
+            restart: always
+            logging:
+              driver: awslogs
+              options:
+                awslogs-region: "${{ inputs.aws_region }}"
+                awslogs-group: "${{ inputs.stage }}-scraper-worker-logs"
+                awslogs-create-group: "true"
+
+        volumes:
+          scraper-data:
+
+        networks:
+          traefik-network:
+            external: true
+        EOF
+
+    - name: Pull Docker image
+      shell: bash
+      run: |
+        aws ecr get-login-password --region "${{ inputs.aws_region }}" | \
+          docker login --username AWS --password-stdin "${{ inputs.ecr_image }}"
+        docker pull "${{ inputs.ecr_image }}"
+
+    - name: Determine deployment target
+      shell: bash
+      run: |
+        if docker ps -q -f name=app-container-blue | grep -q .; then
+          DEPLOYMENT="green"
+          CURRENT_DEPLOYMENT="scrapper-container-green"
+          PREVIOUS_DEPLOYMENT="scrapper-container-blue"
+        else
+          DEPLOYMENT="blue"
+          CURRENT_DEPLOYMENT="scrapper-container-blue"
+          PREVIOUS_DEPLOYMENT="scrapper-container-green"
+        fi
+
+        echo "DEPLOYMENT=$DEPLOYMENT" >> .env
+        echo "CURRENT_DEPLOYMENT=$CURRENT_DEPLOYMENT" >> $GITHUB_ENV
+        echo "PREVIOUS_DEPLOYMENT=$PREVIOUS_DEPLOYMENT" >> $GITHUB_ENV
+
+    - name: Copy .env to app folder
+      shell: bash
+      run: cp .env /home/ubuntu/apps/sabbi-scraper
+
+    - name: Start new deployment and check health
+      shell: bash
+      env:
+        NUMBER_REPLICAS_DECREASE: ${{ steps.resource_config.outputs.number_replicas_decrease }}
+      run: |
+        cd /home/ubuntu/apps/sabbi-scraper
+
+        echo "Checking if previous deployment exists..."
+        if docker compose --project-name=$PREVIOUS_DEPLOYMENT ps | grep -q 'app'; then
+          echo "Previous deployment found: $PREVIOUS_DEPLOYMENT"
+          echo "Scaling down previous deployment to $NUMBER_REPLICAS_DECREASE replicas..."
+          docker compose --project-name=$PREVIOUS_DEPLOYMENT up --scale app=$NUMBER_REPLICAS_DECREASE --scale worker=$NUMBER_REPLICAS_DECREASE -d
+        else
+          echo "No existing previous deployment found. Skipping scale down."
+        fi
+
+        echo "Starting current project..."
+        DEPLOYMENT="$DEPLOYMENT" docker compose --project-name=$CURRENT_DEPLOYMENT up -d --build
+
+        echo "Waiting for $CURRENT_DEPLOYMENT to pass health check..."
+        timeout 90 bash -c "until docker compose --project-name=$CURRENT_DEPLOYMENT exec -T app curl -sf http://localhost:8501/_stcore/health; do echo -n '...'; sleep 5; done"
+        echo "$CURRENT_DEPLOYMENT is healthy."
+
+    - name: Stop previous deployment
+      shell: bash
+      run: |
+        echo "Stopping $PREVIOUS_DEPLOYMENT..."
+        docker compose --project-name="$PREVIOUS_DEPLOYMENT" down
+
+    - name: Clean up .env
+      shell: bash
+      run: rm -f /home/ubuntu/apps/sabbi-scraper/.env
+
+    - name: Prune old Docker images and containers
+      shell: bash
+      run: |
+        docker container prune --force
+        docker image prune --force -a
