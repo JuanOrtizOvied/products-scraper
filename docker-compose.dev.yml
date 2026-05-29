@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    container_name: scraper-app
+    ports:
+      - "8501:8501"
+    env_file: .env
+    volumes:
+      - ./config:/app/config:ro
+      - ./src:/app/src        # live reload on code changes
+    restart: unless-stopped
+
+  worker:
+    build: .
+    container_name: scraper-worker
+    env_file: .env
+    volumes:
+      - ./config:/app/config:ro
+      - ./src:/app/src
+    command: ["python", "-m", "scraper.scripts.worker"]
+    restart: unless-stopped
