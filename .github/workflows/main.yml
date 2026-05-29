@@ -1,123 +1,82 @@
-name: Deploy Production
+name: Production
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
   group: production-deploy
   cancel-in-progress: false
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
-permissions:
-  contents: read
-  packages: write
-
 jobs:
-  # ── 1. Lint & Test ──────────────────────────
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Poetry
-        run: pip install poetry==1.8.3
-
-      - name: Cache Poetry venv
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install
-
-      - name: Run tests
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: poetry run pytest --tb=short -q
-
-  # ── 2. Build & Push Docker Image ────────────
-  build:
-    needs: test
+  bump:
+    name: Tag
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.meta.outputs.tags }}
-      digest: ${{ steps.build-push.outputs.digest }}
+      version: ${{ steps.version.outputs.new_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Bump version and push tag
+        id: version
+        uses: anothrNick/github-tag-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: minor
+          RELEASE_BRANCHES: main
+          WITH_V: true
+          PRERELEASE: true
+          PRERELEASE_SUFFIX: prod
+          INITIAL_VERSION: 1.0.0
+          MINOR_STRING_TOKEN: feat
+          PATCH_STRING_TOKEN: fix
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.new_tag }}
+        run: |
+          gh release create "$TAG" \
+              --repo="$GITHUB_REPOSITORY" \
+              --title="${TAG}" \
+              --generate-notes
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=
-            type=raw,value=latest
+  # ── 4. Build & Push to ECR ──────────────────
+  build:
+    name: Build
+    needs:
+      - bump
+    uses: ./.github/workflows/build_image.yml
+    with:
+      tag: ${{ needs.bump.outputs.version }}
+    secrets:
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws_region: ${{ secrets.AWS_REGION }}
+      ecr_repository_name: ${{ vars.ECR_REPOSITORY_NAME }}
 
-      - name: Build and push
-        id: build-push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ── 3. Deploy ───────────────────────────────
+  # ── 5. Deploy (blue-green on self-hosted) ───
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: production
+    name: Deploy
+    needs:
+      - build
+      - bump
+    runs-on: production-server
+    environment: Production
+    env:
+      ECR_IMAGE: ${{ secrets.AWS_ECR_REGISTRY }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY_NAME }}:${{ needs.bump.outputs.version }}
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Production Environment
+        uses: ./.github/actions/deploy
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            set -euo pipefail
-
-            # Pull latest image
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
-            cd ${{ secrets.DEPLOY_DIR }}
-
-            # Stop existing containers, start fresh
-            docker compose down
-            docker compose up -d
-
-            # Wait for health check
-            echo "Waiting for health check..."
-            for i in $(seq 1 30); do
-              if curl -sf http://localhost:8501/_stcore/health > /dev/null 2>&1; then
-                echo "✅ Healthy after ${i}s"
-                exit 0
-              fi
-              sleep 1
-            done
-            echo "❌ Health check failed"
-            docker compose logs --tail=50
-            exit 1
+          stage: production
+          domain: scraper.${{ secrets.HOSTED_ZONE }}
+          ecr_image: ${{ env.ECR_IMAGE }}
+          aws_region: ${{ secrets.AWS_REGION }}
+          aws_secret_name: ${{ secrets.PRODUCTION_SECRET_NAME }}
