@@ -83,7 +83,7 @@ runs:
               driver: awslogs
               options:
                 awslogs-region: "${{ inputs.aws_region }}"
-                awslogs-group: "${{ inputs.stage }}-scraper-logs"
+                awslogs-group: "${{ inputs.stage }}-boba-fett-logs"
                 awslogs-create-group: "true"
 
           worker:
@@ -105,7 +105,7 @@ runs:
               driver: awslogs
               options:
                 awslogs-region: "${{ inputs.aws_region }}"
-                awslogs-group: "${{ inputs.stage }}-scraper-worker-logs"
+                awslogs-group: "${{ inputs.stage }}-boba-fett-worker-logs"
                 awslogs-create-group: "true"
 
         volumes:
