@@ -76,7 +76,7 @@ jobs:
         uses: ./.github/actions/deploy
         with:
           stage: production
-          domain: scraper.${{ secrets.HOSTED_ZONE }}
+          domain: boba-fett.${{ secrets.HOSTED_ZONE }}
           ecr_image: ${{ env.ECR_IMAGE }}
           aws_region: ${{ secrets.AWS_REGION }}
           aws_secret_name: ${{ secrets.PRODUCTION_SECRET_NAME }}
