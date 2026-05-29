@@ -24,7 +24,6 @@ Thumbs.db
 .claude/
 
 # Data files (not code)
-*.xlsx
 data/*.backup
 data/uploaded_pdfs/
 
