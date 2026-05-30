@@ -8,8 +8,8 @@ Sistema interno de Sabbi para buscar, extraer y clasificar productos de inversi�
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌────────────┐     ┌──────────┐
-│  Streamlit   │────▶│  Job Queue   │────▶│   Worker   │────▶│ Review   │
-│     UI       │     │   (SQLite)   │     │  Pipeline  │     │  Queue   │
+│  Streamlit  │────▶│  Job Queue   │────▶│   Worker   │────▶│ Review   │
+│     UI      │     │   (SQLite)   │     │  Pipeline  │     │  Queue   │
 └─────────────┘     └──────────────┘     └────────────┘     └──────────┘
                                                │
                           ┌────────────────────┼────────────────────┐
